@@ -1,0 +1,5 @@
+CREATE TABLE users (
+  ID VARCHAR PRIMARY KEY,
+  email VARCHAR NOT NULL,
+  password VARCHAR NOT NULL
+)
