@@ -1,3 +1,5 @@
+use crate::models::{LoginDTO, RegisterDTO};
+
 use super::models::User;
 
 use super::Pool;
@@ -39,5 +41,35 @@ pub async fn find_all(pool: web::Data<Pool>) -> Result<HttpResponse, Error> {
     match users {
         Ok(users) => Ok(HttpResponse::Ok().json(users)),
         Err(_) => Ok(HttpResponse::NotFound().body(("No user found").to_string())),
+    }
+}
+
+pub async fn login(
+    login_dto: web::Json<LoginDTO>,
+    pool: web::Data<Pool>,
+) -> Result<HttpResponse, Error> {
+    let login_response = web::block(move || User::login(login_dto.0, &mut pool.get().unwrap()))
+        .await
+        .unwrap();
+
+    match login_response {
+        Some(login_info_dto) => Ok(HttpResponse::Ok().json(login_info_dto)),
+        None => Ok(HttpResponse::Unauthorized().body(("User not authorized to login").to_string())),
+    }
+}
+
+pub async fn register(
+    register_dto: web::Json<RegisterDTO>,
+    pool: web::Data<Pool>,
+) -> Result<HttpResponse, Error> {
+    let register_response =
+        web::block(move || User::register(register_dto.0, &mut pool.get().unwrap()))
+            .await
+            .unwrap();
+
+    match register_response {
+        Ok(_) => Ok(HttpResponse::Ok().body("user inserted correctly".to_string())),
+        Err(_) => Ok(HttpResponse::InternalServerError()
+            .body("Something went wrong while inserting the user".to_string())),
     }
 }
