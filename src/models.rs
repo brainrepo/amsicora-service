@@ -1,5 +1,6 @@
 use crate::schema::users;
 use crate::schema::users::dsl::*;
+use crate::utils::user_token::TokenPayload;
 use bcrypt::{hash, verify, DEFAULT_COST};
 use diesel::{insert_into, prelude::*};
 use serde::{Deserialize, Serialize};
@@ -13,7 +14,7 @@ pub struct User {
     pub password: String,
 }
 
-#[derive(Serialize)]
+#[derive(Deserialize)]
 pub struct LoginDTO {
     pub email: String,
     pub password: String,
@@ -36,7 +37,7 @@ impl User {
         users.get_results::<User>(conn)
     }
 
-    pub fn login(login: LoginDTO, conn: &mut PgConnection) -> Option<LoginInfoDTO> {
+    pub fn login(login: LoginDTO, conn: &mut PgConnection) -> Option<String> {
         if let Ok(user_to_verify) = users
             .filter(email.eq(&login.email))
             .get_result::<User>(conn)
@@ -44,10 +45,10 @@ impl User {
             if !user_to_verify.password.is_empty()
                 && verify(&login.password, &user_to_verify.password).unwrap()
             {
-                return Some(LoginInfoDTO {
+                return Some(TokenPayload::generate_token(&LoginInfoDTO {
                     email: user_to_verify.email,
                     id: user_to_verify.id,
-                });
+                }));
             }
             None
         } else {

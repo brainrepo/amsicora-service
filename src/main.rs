@@ -4,6 +4,7 @@ use diesel::r2d2::{self, ConnectionManager};
 mod handlers;
 mod models;
 mod schema;
+mod utils;
 
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
@@ -26,6 +27,7 @@ async fn main() -> std::io::Result<()> {
             // .service(handlers::echo)
             .route("/hey", web::get().to(handlers::find_all))
             .route("/register", web::post().to(handlers::register))
+            .route("login", web::post().to(handlers::login))
     })
     .bind(("127.0.0.1", 8081))?
     .run()
